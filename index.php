@@ -13,7 +13,7 @@
  * 
  * @package SurveySez
  * @author Jesse Hernandez <jesse@jesseh-codes.com>
- * @version 0.1 2018/05/08
+ * @version 0.2 2018/05/18
  * @link http://www.jesseh-codes.com/
  * @license https://www.apache.org/licenses/LICENSE-2.0
  * @see survey_view.php
@@ -25,7 +25,8 @@
 require '../inc_0700/config_inc.php'; #provides configuration, pathing, error handling, db credentials 
  
 # SQL statement
-$sql = "SELECT * from srv_surveys";
+// $sql = "SELECT * from srv_surveys";
+$sql = "select CONCAT(a.FirstName, ' ', a.LastName) AdminName, s.SurveyID, s.Title, s.Description, date_format(s.DateAdded, '%W %D %M %Y %H:%i') 'DateAdded' from " . PREFIX . "surveys s, " . PREFIX . "Admin a where s.AdminID=a.AdminID order by s.DateAdded desc";
 
 #Fills <title> tag. If left empty will default to $PageTitle in config_inc.php  
 $config->titleTag = 'Surveys made with love & PHP in Seattle';
@@ -38,33 +39,11 @@ $config->metaKeywords = 'Surveys,PHP,Fun,'. $config->metaKeywords;
 //loads extra styles etc. for specific pages (not uploaded to all pages)
 $config->loadhead .= '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">';
 
-/*
-$config->metaDescription = 'Web Database ITC281 class website.'; #Fills <meta> tags.
-$config->metaKeywords = 'SCCC,Seattle Central,ITC281,database,mysql,php';
-$config->metaRobots = 'no index, no follow';
-$config->loadhead = ''; #load page specific JS
-$config->banner = ''; #goes inside header
-$config->copyright = ''; #goes inside footer
-$config->sidebar1 = ''; #goes inside left side of page
-$config->sidebar2 = ''; #goes inside right side of page
-$config->nav1["page.php"] = "New Page!"; #add a new page to end of nav1 (viewable this page only)!!
-$config->nav1 = array("page.php"=>"New Page!") + $config->nav1; #add a new page to beginning of nav1 (viewable this page only)!!
-*/
-
 # END CONFIG AREA ---------------------------------------------------------- 
 
 get_header(); #defaults to theme header or header_inc.php
-?>
-<h3 align="center"><?=smartTitle();?></h3>
 
-<p>This page, along with <b>survey_view.php</b>, demonstrate a List/View web application.</p>
-<p>It was built on the mysql shared web application page, <b>demo_shared.php</b></p>
-<p>This page is the entry point of the application, meaning this page gets a link on your web site.  Since the current subject is muffins, we could name the link something clever like <a href="<?php echo VIRTUAL_PATH; ?>demo_list_pager.php">Muffins</a></p>
-<p>Use <b>demo_list_pager.php</b> and <b>survey_view.php</b> as a starting point for building your own List/View web application!</p> 
-<?php
-#reference images for pager
-//$prev = '<img src="' . $config->virtual_path . '/images/arrow_prev.gif" border="0" />';
-//$next = '<img src="' . $config->virtual_path . '/images/arrow_next.gif" border="0" />';
+echo '<h3 align="center">Surveys</h3>';
 
 #images in this case are from font awesome
 $prev = '<i class="fa fa-chevron-circle-left"></i>';
@@ -80,12 +59,39 @@ $result = mysqli_query(IDB::conn(),$sql) or die(trigger_error(mysqli_error(IDB::
 if(mysqli_num_rows($result) > 0)
 {#records exist - process
 	if($myPager->showTotal()==1){$itemz = "survey";}else{$itemz = "surveys";}  //deal with plural
-    echo '<div align="center">We have ' . $myPager->showTotal() . ' ' . $itemz . '!</div>';
+	echo '<div align="center">We have ' . $myPager->showTotal() . ' ' . $itemz . '!</div>';
+	
+	echo '
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th scope="col">Title</th>
+					<th scope="col">Admin Name</th>
+					<th scope="col">Description</th>
+					<th scope="col">Date Added</th>
+				</tr>
+			</thead>
+			<tbody>
+		
+	';
+
 	while($row = mysqli_fetch_assoc($result))
 	{# process each row
-         echo '<div align="center"><a href="' . VIRTUAL_PATH . 'surveys/survey_view.php?id=' . (int)$row['SurveyID'] . '">' . dbOut($row['Title']) . '</a>';
-         echo '</div>';
+
+		echo '
+				<tr class="table-light">
+					<th scope="row"><a href="' . VIRTUAL_PATH . 'surveys/survey_view.php?id=' . (int)$row['SurveyID'] . '">' . dbOut($row['Title']) . '</a></th>
+					<td>' . dbOut($row['AdminName']) . '</td>
+					<td>' . dbOut($row['Description']) . '</td>
+					<td>' . dbOut($row['DateAdded']) . '</td>
+				</tr>
+		';
 	}
+
+	echo '
+			</tbody>
+		</table>
+	';
 	echo $myPager->showNAV(); # show paging nav, only if enough records	 
 }else{#no records
     echo "<div align=center>There are currently no surveys.</div>";	
